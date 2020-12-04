@@ -12,6 +12,8 @@ SzAvg=4; %Size of local spatial average to increase SNR
 AllFreq=zeros(9,10);
 Compt=0;
 
+
+
 %%%%%%%%%%%%%Choose directory where data .tif files are%%%%%%%%%
 
 DataPath=uigetdir('','Choose Start Folder');
@@ -19,8 +21,9 @@ cd(DataPath)
 
 %Find and analyze every .tif file one after the other
 list=ls('*.tif');
-if DrawCentralLine
-    CentralLine=cell(1,size(list,1));
+
+if DrawCentralLine %If a central line is asked, initialize the matrix CentralLine
+    CentralLine=cell(1,size(list,1)); 
 end
 
 for nn=1:size(list,1)
@@ -35,21 +38,27 @@ for nn=1:size(list,1)
     FilteredIma=Local2DAverage(Ima,SzAvg);
     imagesc(FilteredIma(:,:,1))
     
+%     for ii=1:300
+%         imagesc(FilteredIma(:,:,ii))
+%         axis equal
+%         pause(0.05)
+%     end
+    
     %Draw CentralLine (if requested)
     if DrawCentralLine
         %Write a function
-        imagesc(FilteredIma(:,:,1))
+        imagesc(FilteredIma(:,:,1)) %#ok<*UNRCH>
         title('Draw central line')
         [x, y] = getline;
         SeparationLine=zeros(2,1+ceil(x(end))-floor(x(1)));
         SeparationLine(1,:)=(floor(x(1)):ceil(x(end)));
-        Compt=0;
+        Compt2=0;
         for zz=1:(length(x)-1)
             Length=sum(SeparationLine(1,:)<x(zz+1)&SeparationLine(1,:)>x(zz));
-            SeparationLine(2,1+Compt:Compt+Length)=(y(zz):(y(zz+1)-y(zz))/(Length-1):y(zz+1));
-            Compt=Compt+Length;
+            SeparationLine(2,1+Compt2:Compt2+Length)=(y(zz):(y(zz+1)-y(zz))/(Length-1):y(zz+1));
+            Compt2=Compt2+Length;
         end
-        SeparationLine(2,Compt:end)=y(end);
+        SeparationLine(2,Compt2:end)=y(end);
         hold on
         plot(SeparationLine(1,:),SeparationLine(2,:),'r','linewidth',2)
         pause(0.1)
@@ -57,7 +66,8 @@ for nn=1:size(list,1)
     end
     
     %Calculate FFt and PSD
-    
+   % FilteredIma=FilteredIma(:,:,:);
+ 
     [Freq,Freq_FromPSD]=CalculateFreqAndPSDMap(FilteredIma,Size,nn,AcqFreq);
     
     
@@ -65,10 +75,10 @@ for nn=1:size(list,1)
     FrequencyMap=Freq(:,:,1)*0;
     
     for ff=1:9 % I divide the frequency into 9 bands of 5 Hz
-        
+        FreqBand=AcqFreq/20; %Frequency bandwidth
         %Create the binary image
         Freq2=Freq(:,:,1);
-        Freq2=Freq2>ff*5&Freq2<(ff+1)*5;
+        Freq2=Freq2>ff*FreqBand&Freq2<(ff+1)*FreqBand;
         
         Freq2=bwlabel(Freq2, 8);
         Freq2=imfill(Freq2);
@@ -82,10 +92,6 @@ for nn=1:size(list,1)
         FrequencyMap=FrequencyMap+keeperBlobsImage.*Freq(:,:,1);
         keeperBlobsImage= bwlabel(keeperBlobsImage, 8);
         
-        if DrawCentralLine
-            SeparationLine=CentralLine{nn};
-            AngleLine=atan(diff(SeparationLine(2,:),1,2))*180/pi;
-        end
         
         NAreas=size(EffectiveCilia,1);% Number of cilia
         %Position of cilia
@@ -105,6 +111,10 @@ for nn=1:size(list,1)
         
         
         if DrawCentralLine %If the central line is drawn, it saves the orientation depending on the position of the cilia + Saves if dorsal or ventral + Saves if too far from central canal (to be discarded)
+
+            SeparationLine=CentralLine{nn};
+            AngleLine=atan(diff(SeparationLine(2,:),1,2))*180/pi;
+ 
             CiliaAngle=[EffectiveCilia.Orientation];
             IsDorsal=reshape([EffectiveCilia.Centroid],2,NAreas);
             
@@ -125,8 +135,12 @@ for nn=1:size(list,1)
         Compt=Compt+NAreas;
     end
     
-    imagesc(FrequencyMap,[5 AcqFreq/2])
+    imagesc(FrequencyMap,[FreqBand AcqFreq/2])
+    colorbar
+    axis equal
     
+    set(gca,'FontSize',24)
+    saveas(gcf,SaveFigure)
     %Save 2D map
     save(SaveFreq,'Freq','Freq_FromPSD','AllFreq','FrequencyMap')
     

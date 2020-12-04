@@ -1,3 +1,4 @@
+
 function [Freq,Freq_FromPSD]=CalculateFreqAndPSDMap(Ima,Sz,nn,AcqFreq)
 
 Freq=zeros(Sz.NLines,Sz.NCol,5);
@@ -14,24 +15,13 @@ for ll=1:Sz.NLines
         PSD=F.*conj(F);%Power Spectral density
         Abs_F=smooth(abs(F(2:floor(end/2))));
         
-        [Max,LocalFreq]=findpeaks(Abs_F,'MinPeakDistance',10,'NPeaks',5);
-        [Max2,LocalFreq2]=findpeaks(PSD(2:floor(end/2)),'MinPeakDistance',10,'NPeaks',5);
+        [~,LocalFreq]=findpeaks(Abs_F,'MinPeakDistance',10,'NPeaks',5,'SortStr','descend');
+        [~,LocalFreq2]=findpeaks(PSD(2:floor(end/2)),'MinPeakDistance',10,'NPeaks',5,'SortStr','descend');
         LocalFreq=LocalFreq*AcqFreq/(length(F)-1);
         LocalFreq2=LocalFreq2*AcqFreq/(length(F)-1);
+        Freq(ll,cc,:)=LocalFreq;
+        Freq_FromPSD(ll,cc,:)=LocalFreq2;
         
-        if isempty(LocalFreq)==0
-            L=size(LocalFreq,1);
-            [~,Order]=sort(Max,'descend');
-            SortedLocalFreq=LocalFreq(Order);
-            Freq(ll,cc,1:L)=SortedLocalFreq;
-        end
-        
-        if isempty(LocalFreq2)==0
-            L2=size(LocalFreq2,1);
-            [~,Order]=sort(Max2,'descend');
-            SortedLocalFreq2=LocalFreq2(Order);
-            Freq_FromPSD(ll,cc,1:L2)=SortedLocalFreq2;
-        end
         
         
     end
