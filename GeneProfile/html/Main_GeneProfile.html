@@ -1,0 +1,548 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Main_GeneProfile</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-12-02"><meta name="DC.source" content="Main_GeneProfile.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput">clear; close <span class="string">all</span>; clc
+
+<span class="comment">%Variables To be defined</span>
+
+CurrentPath=pwd;
+addpath(genpath(CurrentPath))
+
+Rotate=0;
+Wiener=1;
+Display=0;
+Avi=0;
+Output=0;
+
+Action =0;
+Files=<span class="string">''</span>;
+
+FrameTime=0.1;
+PixelSize=0.189;
+FilterSize=5;
+Threshold=50;
+
+
+<span class="comment">%Start GUI</span>
+
+H=GeneProfile;
+ListHandles=allchild(H);
+
+<span class="keyword">while</span>  Action&gt;=0
+
+    <span class="keyword">if</span> Action &gt;0&amp;&amp;Action&lt;4 <span class="comment">%Then performs the action</span>
+
+        <span class="keyword">if</span> iscell(Files) <span class="comment">%It is the case if several files are chosen</span>
+            Nfiles=size(Files,2);<span class="comment">%I keep the cell structure</span>
+        <span class="keyword">elseif</span> length(Files)&gt;=1 <span class="comment">%If one file only, it outputs a char with many characters</span>
+            Nfiles=1;
+            Files2{1,1}=Files;
+            Files=Files2;
+            clear <span class="string">Files2</span>
+        <span class="keyword">else</span>
+            Nfiles=0;
+            hTemp=msgbox(<span class="string">'Please select some file(s) first'</span>);
+            Action=0;
+            pause(5)
+            delete(hTemp)
+
+        <span class="keyword">end</span>
+
+        <span class="comment">%Find the desired ouput from the checkboxes</span>
+        Output=get(ListHandles(2),<span class="string">'Value'</span>)+2*get(ListHandles(1),<span class="string">'Value'</span>);<span class="comment">%0 if no output, 1 if .mat, 2 if.xls, 3 if both</span>
+
+        <span class="comment">%Opens the first file and apply rotation (if asked) and Wiener filter (if asked)</span>
+
+        <span class="keyword">if</span> Nfiles&gt;0 <span class="comment">%Updates the value of the parameters that will be used</span>
+            FrameTime=str2double(get(ListHandles(8),<span class="string">'String'</span>));
+            PixelSize=str2double(get(ListHandles(7),<span class="string">'String'</span>));
+            FilterSize=str2double(get(ListHandles(6),<span class="string">'String'</span>));
+            Threshold=str2double(get(ListHandles(5),<span class="string">'String'</span>))/100;
+
+            <span class="keyword">if</span> isempty(Ima)<span class="comment">% Open the .tif file. If Ima already exists, I don't load the data again.</span>
+                <span class="keyword">try</span>
+
+                    DataFile=strcat(FilePath,<span class="string">'\'</span>,Files{1}); <span class="comment">%For Windows</span>
+
+                <span class="keyword">catch</span>
+
+                    DataFile=strcat(FilePath,Files{1}); <span class="comment">%For Mac</span>
+
+                <span class="keyword">end</span>
+
+                <span class="comment">%Image parameters</span>
+                Infos=imfinfo(DataFile);
+                NCol=Infos(1).Width;
+                NLines=Infos(1).Height;
+                NImages=numel(Infos);
+                Ima=zeros(NLines,NCol,NImages);
+
+                <span class="keyword">for</span> ii=1:NImages
+                    Ima(:,:,ii) = double(imread(DataFile,<span class="string">'Index'</span>,ii,<span class="string">'Info'</span>, Infos));
+                    <span class="comment">%Ima(:,:,ii)=Ima(:,:,ii)./mean(mean(Ima(:,:,ii)));</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> Rotate <span class="comment">% I perform two rotations and crop</span>
+                NewIma=RotateAndCropImage(Ima); <span class="comment">%#ok&lt;UNRCH&gt;</span>
+                NewIma=RotateAndCropImage(NewIma);
+            <span class="keyword">else</span>
+                NewIma=Ima;
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> Wiener
+                <span class="keyword">for</span> ii=1: NImages
+                    NewIma(:,:,ii)=wiener2(NewIma(:,:,ii),[FilterSize FilterSize]);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">switch</span> Action
+            <span class="keyword">case</span> 1
+                <span class="keyword">for</span> nn=1:Nfiles
+                    <span class="keyword">if</span> nn&gt;1
+                        <span class="keyword">try</span>
+
+                            DataFile=strcat(FilePath,<span class="string">'\'</span>,Files{nn}); <span class="comment">%For Windows</span>
+
+                        <span class="keyword">catch</span>
+
+                            DataFile=strcat(FilePath,Files{nn}); <span class="comment">%For Mac</span>
+
+                        <span class="keyword">end</span>
+
+                        <span class="comment">%Image parameters</span>
+                        Infos=imfinfo(DataFile);
+                        NCol=Infos(1).Width;
+                        NLines=Infos(1).Height;
+                        NImages=numel(Infos);
+                        Ima=zeros(NLines,NCol,NImages);
+
+                        <span class="keyword">for</span> ii=1:NImages
+                            Ima(:,:,ii) = double(imread(DataFile,<span class="string">'Index'</span>,ii,<span class="string">'Info'</span>, Infos));
+                            <span class="comment">%Ima(:,:,ii)=Ima(:,:,ii)./mean(mean(Ima(:,:,ii)));</span>
+                        <span class="keyword">end</span>
+
+                        <span class="keyword">if</span> Rotate <span class="comment">% I perform two rotations.</span>
+                            NewIma=RotateAndCropImage(Ima); <span class="comment">%#ok&lt;UNRCH&gt;</span>
+                            NewIma=RotateAndCropImage(NewIma);
+                        <span class="keyword">else</span>
+                            NewIma=Ima;
+                        <span class="keyword">end</span>
+
+                        <span class="keyword">if</span> Wiener
+                            <span class="keyword">for</span> ii=1: NImages
+                                NewIma(:,:,ii)=wiener2(NewIma(:,:,ii),[FilterSize FilterSize]);
+                            <span class="keyword">end</span>
+                        <span class="keyword">end</span>
+
+                    <span class="keyword">end</span>
+
+                    Name=Files{nn};
+                    Name=Name(1:end-4);
+                    CSFProfile(nn)=Automatic_Kymograph_GUI_2020(NewIma,FilePath,Name,nn,PixelSize,FrameTime,Avi,Display,Threshold,Output);
+                    plot(ListHandles(24),CSFProfile(nn).Pos, smooth(CSFProfile(nn).Speed),<span class="string">'linewidth'</span>,2)
+                    xlabel(ListHandles(24),<span class="string">'Dorso-ventral position (um)'</span>)
+                    ylabel(ListHandles(24),<span class="string">'Average Rostro-Caudal Speed (um/s)'</span>)
+                    legend(ListHandles(24),<span class="string">'Experimental data'</span>)
+
+                    set(ListHandles(19),<span class="string">'BackgroundColor'</span>,[0,1,0]);
+                    set(ListHandles(4),<span class="string">'BackgroundColor'</span>,[0,1,0]);
+                <span class="keyword">end</span>
+
+            <span class="keyword">case</span> 2
+                Kymo=permute(NewIma,[3 2 1]);
+                [~,PosMax]=max(mean(mean(Kymo)));
+
+                imagesc(ListHandles(23),Kymo(:,:,PosMax))
+                set(ListHandles(16),<span class="string">'BackgroundColor'</span>,[0.93,0.69,0.13]);
+
+            <span class="keyword">case</span> 3
+                Kymo=permute(NewIma,[3 2 1]);
+                [~,PosMax]=max(mean(mean(Kymo)));
+
+                imagesc(ListHandles(23),Kymo(:,:,PosMax))
+                Kymo=rescale(Kymo,0,1);
+                Min=quantile(Kymo(:,:,PosMax),Threshold,<span class="string">'all'</span>);
+                Kymo(Kymo&lt;Min)=Min;
+                Kymo=rescale(Kymo,1,2);
+                Kymo=Kymo./repmat(mean(Kymo,1),NImages,1);
+
+                Kymo_Avg=mean(Kymo(:,:,PosMax-1:PosMax+1),3);
+
+                imagesc(ListHandles(24),Kymo_Avg&gt;1.01)
+                set(ListHandles(15),<span class="string">'BackgroundColor'</span>,[0.93,0.69,0.13]);
+
+
+        <span class="keyword">end</span>
+
+        drawnow();
+        Action=0;
+
+    <span class="keyword">elseif</span> Action==4
+
+                <span class="keyword">if</span> isempty(CSFProfile)
+                    hTemp=msgbox(<span class="string">'Please calculate experimental profile first'</span>);
+                    Action=0;
+                    pause(3)
+                    delete(hTemp)
+                <span class="keyword">else</span>
+                    TheoreticalProfile=Fit_CSFmodel(CSFProfile);
+
+                    <span class="keyword">for</span> nn=1:Nfiles
+                        plot(ListHandles(24),CSFProfile(nn).Pos, smooth(CSFProfile(nn).Speed),<span class="string">'linewidth'</span>,2)
+                        hold(ListHandles(24),<span class="string">'on'</span>)
+                        plot(ListHandles(24),TheoreticalProfile(nn).X,TheoreticalProfile(nn).Profile,<span class="string">'-r'</span>,<span class="string">'linewidth'</span>,2)
+                        xlabel(ListHandles(24),<span class="string">'Dorso-ventral position'</span>)
+                        ylabel(ListHandles(24),<span class="string">'Average Rostro-Caudal Speed (um/s)'</span>)
+                        legend(ListHandles(24),<span class="string">'Experimental data'</span>, <span class="string">'Theoretical model'</span>)
+
+                        figure
+                        plot(CSFProfile(nn).Pos, smooth(CSFProfile(nn).Speed),<span class="string">'linewidth'</span>,2)
+                        hold <span class="string">on</span>
+                        plot(TheoreticalProfile(nn).X,TheoreticalProfile(nn).Profile,<span class="string">'-r'</span>,<span class="string">'linewidth'</span>,2)
+                        xlabel(<span class="string">'Dorso-ventral position (um)'</span>)
+                        ylabel(<span class="string">'Average Rostro-Caudal Speed (um/s)'</span>)
+                        legend(<span class="string">'Experimental data'</span>, <span class="string">'Theoretical model (eLife 2020)'</span>)
+                        <span class="keyword">try</span>
+                            Name=Files{nn};
+                            Name=Name(1:end-4);
+                            saveas(gcf,strcat(FilePath,Name,<span class="string">'_Profile.fig'</span>))
+                            saveas(gcf,strcat(FilePath,Name,<span class="string">'_Profile.png'</span>))
+                        <span class="keyword">catch</span>
+                            saveas(gcf,strcat(FilePath,<span class="string">'File'</span>,num2str(nn),<span class="string">'_Profile.fig'</span>))
+                            saveas(gcf,strcat(FilePath,<span class="string">'File'</span>,num2str(nn),<span class="string">'_Profile.png'</span>))
+                        <span class="keyword">end</span>
+                        close(gcf)
+
+                        pause(5)
+
+                        hold(ListHandles(24),<span class="string">'off'</span>)
+                    <span class="keyword">end</span>
+                    <span class="keyword">if</span> mod(Output,2)==1 <span class="comment">% Save as .mat</span>
+                        save(strcat(FilePath,<span class="string">'TheoreticalProfiles.mat'</span>),<span class="string">'TheoreticalProfile'</span>);
+                    <span class="keyword">end</span>
+
+                    <span class="keyword">if</span> Output&gt;1 <span class="comment">% Save as .xls</span>
+
+                        NameStruct=fieldnames(TheoreticalProfile(1));
+                        SaveStructAsXls(TheoreticalProfile,strcat(FilePath,<span class="string">'TheoreticalProfiles.xlsx'</span>),NameStruct);
+
+                    <span class="keyword">end</span>
+                    Action=0;
+                <span class="keyword">end</span>
+    <span class="keyword">else</span>
+        pause(0.5)
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Warning: Function labindex has the same name as a MATLAB builtin. We suggest you
+rename the function to avoid a potential name conflict. 
+Warning: Function numlabs has the same name as a MATLAB builtin. We suggest you
+rename the function to avoid a potential name conflict. 
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+clear; close all; clc
+
+%Variables To be defined
+
+CurrentPath=pwd;
+addpath(genpath(CurrentPath))
+
+Rotate=0;
+Wiener=1;
+Display=0;
+Avi=0;
+Output=0;
+
+Action =0;
+Files='';
+
+FrameTime=0.1;
+PixelSize=0.189;
+FilterSize=5;
+Threshold=50;
+
+
+%Start GUI
+
+H=GeneProfile;
+ListHandles=allchild(H);
+
+while  Action>=0
+    
+    if Action >0&&Action<4 %Then performs the action
+        
+        if iscell(Files) %It is the case if several files are chosen
+            Nfiles=size(Files,2);%I keep the cell structure
+        elseif length(Files)>=1 %If one file only, it outputs a char with many characters
+            Nfiles=1;
+            Files2{1,1}=Files;
+            Files=Files2;
+            clear Files2
+        else
+            Nfiles=0;
+            hTemp=msgbox('Please select some file(s) first');
+            Action=0;
+            pause(5)
+            delete(hTemp)
+            
+        end
+        
+        %Find the desired ouput from the checkboxes
+        Output=get(ListHandles(2),'Value')+2*get(ListHandles(1),'Value');%0 if no output, 1 if .mat, 2 if.xls, 3 if both
+        
+        %Opens the first file and apply rotation (if asked) and Wiener filter (if asked)
+        
+        if Nfiles>0 %Updates the value of the parameters that will be used
+            FrameTime=str2double(get(ListHandles(8),'String'));
+            PixelSize=str2double(get(ListHandles(7),'String'));
+            FilterSize=str2double(get(ListHandles(6),'String'));
+            Threshold=str2double(get(ListHandles(5),'String'))/100;
+            
+            if isempty(Ima)% Open the .tif file. If Ima already exists, I don't load the data again.
+                try
+                    
+                    DataFile=strcat(FilePath,'\',Files{1}); %For Windows
+                    
+                catch
+                    
+                    DataFile=strcat(FilePath,Files{1}); %For Mac
+                    
+                end
+                
+                %Image parameters
+                Infos=imfinfo(DataFile);
+                NCol=Infos(1).Width;
+                NLines=Infos(1).Height;
+                NImages=numel(Infos);
+                Ima=zeros(NLines,NCol,NImages);
+                
+                for ii=1:NImages
+                    Ima(:,:,ii) = double(imread(DataFile,'Index',ii,'Info', Infos));
+                    %Ima(:,:,ii)=Ima(:,:,ii)./mean(mean(Ima(:,:,ii)));
+                end
+            end
+            
+            if Rotate % I perform two rotations and crop
+                NewIma=RotateAndCropImage(Ima); %#ok<UNRCH>
+                NewIma=RotateAndCropImage(NewIma);
+            else
+                NewIma=Ima;
+            end
+            
+            if Wiener
+                for ii=1: NImages
+                    NewIma(:,:,ii)=wiener2(NewIma(:,:,ii),[FilterSize FilterSize]);
+                end
+            end
+        end
+        
+        switch Action
+            case 1
+                for nn=1:Nfiles
+                    if nn>1
+                        try
+                            
+                            DataFile=strcat(FilePath,'\',Files{nn}); %For Windows
+                            
+                        catch
+                            
+                            DataFile=strcat(FilePath,Files{nn}); %For Mac
+                            
+                        end
+                        
+                        %Image parameters
+                        Infos=imfinfo(DataFile);
+                        NCol=Infos(1).Width;
+                        NLines=Infos(1).Height;
+                        NImages=numel(Infos);
+                        Ima=zeros(NLines,NCol,NImages);
+                        
+                        for ii=1:NImages
+                            Ima(:,:,ii) = double(imread(DataFile,'Index',ii,'Info', Infos));
+                            %Ima(:,:,ii)=Ima(:,:,ii)./mean(mean(Ima(:,:,ii)));
+                        end
+                        
+                        if Rotate % I perform two rotations.
+                            NewIma=RotateAndCropImage(Ima); %#ok<UNRCH>
+                            NewIma=RotateAndCropImage(NewIma);
+                        else
+                            NewIma=Ima;
+                        end
+                        
+                        if Wiener
+                            for ii=1: NImages
+                                NewIma(:,:,ii)=wiener2(NewIma(:,:,ii),[FilterSize FilterSize]);
+                            end
+                        end
+                        
+                    end
+                    
+                    Name=Files{nn};
+                    Name=Name(1:end-4);
+                    CSFProfile(nn)=Automatic_Kymograph_GUI_2020(NewIma,FilePath,Name,nn,PixelSize,FrameTime,Avi,Display,Threshold,Output);
+                    plot(ListHandles(24),CSFProfile(nn).Pos, smooth(CSFProfile(nn).Speed),'linewidth',2)
+                    xlabel(ListHandles(24),'Dorso-ventral position (um)')
+                    ylabel(ListHandles(24),'Average Rostro-Caudal Speed (um/s)')
+                    legend(ListHandles(24),'Experimental data')
+                    
+                    set(ListHandles(19),'BackgroundColor',[0,1,0]);
+                    set(ListHandles(4),'BackgroundColor',[0,1,0]);
+                end
+                
+            case 2
+                Kymo=permute(NewIma,[3 2 1]);
+                [~,PosMax]=max(mean(mean(Kymo)));
+                
+                imagesc(ListHandles(23),Kymo(:,:,PosMax))
+                set(ListHandles(16),'BackgroundColor',[0.93,0.69,0.13]);
+                
+            case 3
+                Kymo=permute(NewIma,[3 2 1]);
+                [~,PosMax]=max(mean(mean(Kymo)));
+                
+                imagesc(ListHandles(23),Kymo(:,:,PosMax))
+                Kymo=rescale(Kymo,0,1);
+                Min=quantile(Kymo(:,:,PosMax),Threshold,'all');
+                Kymo(Kymo<Min)=Min;
+                Kymo=rescale(Kymo,1,2);
+                Kymo=Kymo./repmat(mean(Kymo,1),NImages,1);
+                
+                Kymo_Avg=mean(Kymo(:,:,PosMax-1:PosMax+1),3);
+                
+                imagesc(ListHandles(24),Kymo_Avg>1.01)
+                set(ListHandles(15),'BackgroundColor',[0.93,0.69,0.13]);
+                
+                
+        end
+        
+        drawnow();
+        Action=0;
+        
+    elseif Action==4
+        
+                if isempty(CSFProfile)
+                    hTemp=msgbox('Please calculate experimental profile first');
+                    Action=0;
+                    pause(3)
+                    delete(hTemp)
+                else
+                    TheoreticalProfile=Fit_CSFmodel(CSFProfile);   
+                    
+                    for nn=1:Nfiles
+                        plot(ListHandles(24),CSFProfile(nn).Pos, smooth(CSFProfile(nn).Speed),'linewidth',2)
+                        hold(ListHandles(24),'on')
+                        plot(ListHandles(24),TheoreticalProfile(nn).X,TheoreticalProfile(nn).Profile,'-r','linewidth',2)
+                        xlabel(ListHandles(24),'Dorso-ventral position')
+                        ylabel(ListHandles(24),'Average Rostro-Caudal Speed (um/s)') 
+                        legend(ListHandles(24),'Experimental data', 'Theoretical model')
+
+                        figure
+                        plot(CSFProfile(nn).Pos, smooth(CSFProfile(nn).Speed),'linewidth',2)
+                        hold on
+                        plot(TheoreticalProfile(nn).X,TheoreticalProfile(nn).Profile,'-r','linewidth',2)
+                        xlabel('Dorso-ventral position (um)')
+                        ylabel('Average Rostro-Caudal Speed (um/s)') 
+                        legend('Experimental data', 'Theoretical model (eLife 2020)')
+                        try
+                            Name=Files{nn};
+                            Name=Name(1:end-4);
+                            saveas(gcf,strcat(FilePath,Name,'_Profile.fig'))
+                            saveas(gcf,strcat(FilePath,Name,'_Profile.png'))
+                        catch
+                            saveas(gcf,strcat(FilePath,'File',num2str(nn),'_Profile.fig'))
+                            saveas(gcf,strcat(FilePath,'File',num2str(nn),'_Profile.png'))
+                        end
+                        close(gcf)
+                        
+                        pause(5)
+                        
+                        hold(ListHandles(24),'off')
+                    end
+                    if mod(Output,2)==1 % Save as .mat
+                        save(strcat(FilePath,'TheoreticalProfiles.mat'),'TheoreticalProfile');
+                    end
+                    
+                    if Output>1 % Save as .xls
+
+                        NameStruct=fieldnames(TheoreticalProfile(1));
+                        SaveStructAsXls(TheoreticalProfile,strcat(FilePath,'TheoreticalProfiles.xlsx'),NameStruct);
+
+                    end
+                    Action=0;
+                end
+    else
+        pause(0.5)
+    end
+    
+end
+
+
+##### SOURCE END #####
+--></body></html>

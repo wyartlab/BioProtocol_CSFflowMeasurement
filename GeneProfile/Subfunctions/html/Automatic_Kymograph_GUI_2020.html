@@ -1,0 +1,565 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Automatic_Kymograph_GUI_2020</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-12-02"><meta name="DC.source" content="Automatic_Kymograph_GUI_2020.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">%Function to generate a flow profile from the automatic kymograph approach</span>
+
+<span class="comment">%INPUTS:</span>
+<span class="comment">%FileTif : Full path to a multipage .tif file containing the video of particles flowing in CSF</span>
+
+<span class="comment">%Name : Short Name of the acquisition (will be used to create the name of the ouput file)</span>
+
+<span class="comment">%n : Number of the file if batch processing</span>
+
+<span class="comment">%PixelSize : PixelSize of acquisition in micron</span>
+
+<span class="comment">%FrameTIme : 1/fps =Time between two frames (Attention: May be different</span>
+<span class="comment">%from exposure time)</span>
+
+<span class="comment">%SaveVideo : If 1, outputs an avi file with the video of the generation of</span>
+<span class="comment">%kymograph</span>
+
+<span class="keyword">function</span> CSFProfile=Automatic_Kymograph_GUI_2020(Ima,DataPath,Name,n,PixelSize,FrameTime,SaveVideo,Display,Threshold,Output)
+
+<span class="keyword">if</span> exist(<span class="string">'PixelSize'</span>,<span class="string">'var'</span>)==0
+    PixelSize=0.189; <span class="comment">%um</span>
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> exist(<span class="string">'FrameTime'</span>,<span class="string">'var'</span>)==0
+    FrameTime=0.1; <span class="comment">%s</span>
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> exist(<span class="string">'SaveVideo'</span>,<span class="string">'var'</span>)==0
+    SaveVideo=0; <span class="comment">%s</span>
+<span class="keyword">end</span>
+
+
+<span class="keyword">if</span> exist(<span class="string">'Display'</span>,<span class="string">'var'</span>)==0
+    Display=1; <span class="comment">%s</span>
+<span class="keyword">end</span>
+
+NLines=size(Ima,1);
+NCol=size(Ima,2); <span class="comment">%#ok&lt;NASGU&gt;</span>
+NImages=size(Ima,3);
+
+<span class="comment">%Permute dimensions to obtain the kymograph</span>
+Kymo=permute(Ima,[3 2 1]);
+
+<span class="comment">%Kymograph filtering : I filter out 50% of less bright pixels (Essentially</span>
+<span class="comment">%pixels outisde the canal) and rescale all pixels between 1 and 2</span>
+
+Kymo=rescale(Kymo,0,1);
+[~,CanalCenter]=max(mean(mean(Kymo)));
+
+Min=quantile(Kymo(:,:,CanalCenter),Threshold,<span class="string">'all'</span>);
+Kymo(Kymo&lt;Min)=Min;
+Kymo=rescale(Kymo,1,2);
+
+<span class="comment">%Kymograph normalization : I Normalize by the average value (versus time)</span>
+<span class="comment">%to avoid detecting particles stuck at a given position (same position for all times)</span>
+Kymo=Kymo./repmat(mean(Kymo,1),NImages,1);
+
+NAvg=3;
+
+LocalMean=zeros(length(NLines)-5,1);
+LocalSE=zeros(length(NLines)-5,1);
+SpeedAll=zeros(NLines-5,100);
+
+<span class="comment">%If SaveVideo, I will save the video of kymograph fit and histogram at each</span>
+<span class="comment">%position as an .avi file</span>
+<span class="keyword">if</span> SaveVideo
+ v = VideoWriter(strcat(DataPath,<span class="string">'Kymograph_'</span>,Name,<span class="string">'.avi'</span>));
+ v.FrameRate = 2;
+ open(v);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Display
+    figure(1)
+    set(gcf, <span class="string">'Units'</span>, <span class="string">'Normalized'</span>, <span class="string">'OuterPosition'</span>, [0.05, 0.05, 0.9, 0.9]);
+<span class="keyword">end</span>
+<span class="comment">% Scan of all dorso-ventral positions</span>
+<span class="keyword">for</span> ii=1:NLines-NAvg
+
+    <span class="comment">% (Moving)Average of NAvg successive positions (to avoid loosing</span>
+    <span class="comment">% particles too fast)</span>
+
+    Kymo_Avg=mean(Kymo(:,:,ii:ii+NAvg),3);
+    <span class="keyword">if</span> Display
+        <span class="comment">%Disp_Min=quantile(Kymo_Avg,50,'all');</span>
+        <span class="comment">%Disp_Max=quantile(Kymo_Avg,99,'all');</span>
+        subplot(2,2,1)
+        imagesc(Kymo_Avg,[1.01 1.2])
+        title(<span class="string">'Original image (avg 3 lines)'</span>)
+    <span class="keyword">end</span>
+
+    <span class="comment">%Generation of a binary image : Every pixel  1% (Max-Min)Signal above</span>
+    <span class="comment">%the Min Signal is 1.</span>
+
+    Binary=Kymo_Avg&gt;1.01; <span class="comment">% Not very stringent filter</span>
+    Binary= bwlabel(Binary, 8);
+    <span class="keyword">if</span> Display
+        subplot(2,2,2)
+        imagesc(Binary)
+        title(<span class="string">'Binary image'</span>)
+    <span class="keyword">end</span>
+
+    <span class="comment">% Find all regions of interest in the binary image and filters the</span>
+    <span class="comment">% regions that don't look like single lines</span>
+
+    blobMeasurements = regionprops(Binary, Kymo_Avg, <span class="string">'all'</span>);
+
+    <span class="comment">%To keep a region of interest, it has to be at least 15 pixels, have an</span>
+    <span class="comment">%eccentricity above 0.9, to gave only very ellongated ellipses, i.e.</span>
+    <span class="comment">%lines. I also discard vertical and horizontal region of interest,</span>
+    <span class="comment">%because vertical lines are mostly particles stuck in some part of the</span>
+    <span class="comment">%canal, and the horizontal lines are mostly due to camera noise (and</span>
+    <span class="comment">%give infinite speed).</span>
+
+    EffectiveLines=blobMeasurements([blobMeasurements.Eccentricity]&gt;0.9&amp;[blobMeasurements.Area]&gt;15&amp;abs(sin(pi/180*[blobMeasurements.Orientation]))&gt;0.1&amp;abs(cos(pi/180*[blobMeasurements.Orientation]))&gt;0.1);
+
+    <span class="comment">%Create an image with all regions of interest kept (bottom left)</span>
+    keeperIndexes = find([blobMeasurements.Eccentricity]&gt;0.9&amp;[blobMeasurements.Area]&gt;15&amp;abs(sin(pi/180*[blobMeasurements.Orientation]))&gt;0.1&amp;abs(cos(pi/180*[blobMeasurements.Orientation]))&gt;0.1);
+    keeperBlobsImage = ismember(Binary, keeperIndexes);
+    keeperBlobsImage= bwlabel(keeperBlobsImage, 8);
+    <span class="keyword">if</span> Display
+        subplot(2,2,3)
+        imagesc(keeperBlobsImage)
+        title(<span class="string">'Kept Traces'</span>)
+    <span class="keyword">end</span>
+    <span class="comment">%Measure the angle of all remaining regions of interest</span>
+
+    Orient_Kymo=[EffectiveLines.Orientation];
+    <span class="comment">%Calculate the speed from the angle</span>
+
+    Speed=1./tan(-Orient_Kymo*pi/180)*(PixelSize/FrameTime);
+
+    <span class="comment">%I only keep and save the values of speed if at least 5 events are</span>
+    <span class="comment">%detected</span>
+    <span class="keyword">if</span> isempty(Speed)||length(Speed)&lt;5
+        LocalMean(ii)=0;
+        LocalSE(ii)=0;
+
+    <span class="keyword">else</span>
+        LocalMean(ii)=mean(Speed);
+        LocalSE(ii)=std(Speed,0)/sqrt(length(Speed));
+        SpeedAll(ii,1:length(Speed))=Speed;
+    <span class="keyword">end</span>
+
+    <span class="comment">%Plot the histogram (Bottom right)</span>
+    <span class="keyword">if</span> Display
+        subplot(2,2,4)
+        histogram(Speed,20)
+        xlim([-20 20]);
+        title(<span class="string">'Histo speeds'</span>)
+    <span class="keyword">end</span>
+
+    X=linspace(1,NLines-NAvg,NLines-NAvg);
+    <span class="comment">%histogram(Speed,20)</span>
+
+    <span class="keyword">if</span> SaveVideo
+          frame=getframe(gcf);
+          writeVideo(v,frame);
+    <span class="keyword">end</span>
+      pause(0.05)
+
+<span class="keyword">end</span>
+
+ <span class="keyword">if</span> SaveVideo
+     close(v)
+ <span class="keyword">end</span>
+
+ <span class="comment">%Generation of the profile, and Canal normalized position (X)</span>
+
+SmoothedProfile=smooth(LocalMean);
+CanalPos=find(SmoothedProfile~=0);
+X=-(X-CanalPos(end))*PixelSize;
+
+<span class="comment">% %Plot profile without errorbars</span>
+<span class="comment">% figure(10)</span>
+<span class="comment">% plot(X,smooth(squeeze(LocalMean)))</span>
+<span class="comment">% xlabel('Normalized Dorso-ventral position')</span>
+<span class="comment">% ylabel('Average Rostro-Caudal Speed (um/s)')</span>
+<span class="comment">%</span>
+<span class="comment">% %Plot profile with errorbars</span>
+<span class="comment">% figure(2)</span>
+<span class="comment">%</span>
+<span class="comment">% errorbar(X,smooth(squeeze(LocalMean)),squeeze(LocalSE));</span>
+<span class="comment">% xlabel('Normalized Dorso-ventral position')</span>
+<span class="comment">% ylabel('Average Rostro-Caudal Speed (um/s)')</span>
+<span class="comment">%</span>
+
+<span class="comment">%Save the value of all particle speeds but only for the max and min</span>
+<span class="comment">%position (for validation)</span>
+
+[~,Posm]=min(SmoothedProfile);
+[~,PosM]=max(SmoothedProfile);
+
+VentralTraces=SpeedAll(PosM,:);
+VentralTraces=VentralTraces(VentralTraces~=0);<span class="comment">% Because I had to define a matrix where all lines have the same size, there are zeros at the end. I could have used a struct instead</span>
+DorsalTraces=SpeedAll(Posm,:);
+DorsalTraces=DorsalTraces(DorsalTraces~=0);<span class="comment">% Because I had to define a matrix where all lines have the same size, there are zeros at the end. I could have used a struct instead</span>
+
+
+
+<span class="comment">%Save the variables in a .mat file : The variables are saved in a structure whose name is the name of the original file</span>
+
+Name=strrep(Name,<span class="string">'-'</span>,<span class="string">'_'</span>);
+Name=strrep(Name,<span class="string">' '</span>,<span class="string">'_'</span>);
+<span class="keyword">if</span> ~isletter(Name(1))
+    Name=strcat(<span class="string">'F'</span>,Name);
+<span class="keyword">end</span>
+
+<span class="keyword">try</span>
+    OriginalName=Name;
+    eval(strcat(Name,<span class="string">'.Pos =X;'</span>))
+<span class="keyword">catch</span>
+    Name=strcat(<span class="string">'Sample'</span>,num2str(n));
+    OriginalName=Name;
+    eval(strcat(Name,<span class="string">'.Pos =X;'</span>))
+<span class="keyword">end</span>
+disp(Name)
+eval(strcat(Name,<span class="string">'.Speed =LocalMean;'</span>))
+eval(strcat(Name,<span class="string">'.SE =LocalSE;'</span>))
+eval(strcat(Name,<span class="string">'.HistoMax=VentralTraces;'</span>))
+eval(strcat(Name,<span class="string">'.HistoMin=DorsalTraces;'</span>))
+
+<span class="keyword">if</span> n&gt;1
+    <span class="keyword">if</span> mod(Output,2)==1 <span class="comment">% Save as .mat</span>
+        save(strcat(DataPath,<span class="string">'SpeedvsPos_AllTraces.mat'</span>),Name,<span class="string">'-append'</span>);
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> Output&gt;1 <span class="comment">% Save as .xls</span>
+        xlswrite(strcat(DataPath,<span class="string">'FlowProfile.xlsx'</span>),[X;LocalMean;LocalSE],OriginalName);
+    <span class="keyword">end</span>
+
+<span class="keyword">else</span>
+     <span class="keyword">if</span> mod(Output,2)==1 <span class="comment">% Save as .mat</span>
+         save(strcat(DataPath,<span class="string">'SpeedvsPos_AllTraces.mat'</span>),Name);
+     <span class="keyword">end</span>
+
+     <span class="keyword">if</span> Output&gt;1 <span class="comment">%Save as .xls</span>
+         xlswrite(strcat(DataPath,<span class="string">'FlowProfile.xlsx'</span>),[X;LocalMean;LocalSE],OriginalName);
+     <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">%Generate the output structure</span>
+eval(strcat(<span class="string">'CSFProfile='</span>,Name,<span class="string">';'</span>))
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput error">Not enough input arguments.
+
+Error in Automatic_Kymograph_GUI_2020 (line 37)
+NLines=size(Ima,1);
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%Function to generate a flow profile from the automatic kymograph approach
+
+%INPUTS:
+%FileTif : Full path to a multipage .tif file containing the video of particles flowing in CSF
+
+%Name : Short Name of the acquisition (will be used to create the name of the ouput file)
+
+%n : Number of the file if batch processing
+
+%PixelSize : PixelSize of acquisition in micron
+
+%FrameTIme : 1/fps =Time between two frames (Attention: May be different
+%from exposure time)
+
+%SaveVideo : If 1, outputs an avi file with the video of the generation of
+%kymograph
+
+function CSFProfile=Automatic_Kymograph_GUI_2020(Ima,DataPath,Name,n,PixelSize,FrameTime,SaveVideo,Display,Threshold,Output)
+
+if exist('PixelSize','var')==0
+    PixelSize=0.189; %um
+end
+
+if exist('FrameTime','var')==0
+    FrameTime=0.1; %s
+end
+
+if exist('SaveVideo','var')==0
+    SaveVideo=0; %s
+end
+
+
+if exist('Display','var')==0
+    Display=1; %s
+end
+
+NLines=size(Ima,1);
+NCol=size(Ima,2); %#ok<NASGU>
+NImages=size(Ima,3);
+
+%Permute dimensions to obtain the kymograph
+Kymo=permute(Ima,[3 2 1]);
+
+%Kymograph filtering : I filter out 50% of less bright pixels (Essentially
+%pixels outisde the canal) and rescale all pixels between 1 and 2
+
+Kymo=rescale(Kymo,0,1);
+[~,CanalCenter]=max(mean(mean(Kymo)));
+
+Min=quantile(Kymo(:,:,CanalCenter),Threshold,'all');
+Kymo(Kymo<Min)=Min;
+Kymo=rescale(Kymo,1,2);
+
+%Kymograph normalization : I Normalize by the average value (versus time) 
+%to avoid detecting particles stuck at a given position (same position for all times)
+Kymo=Kymo./repmat(mean(Kymo,1),NImages,1);
+
+NAvg=3;
+
+LocalMean=zeros(length(NLines)-5,1);
+LocalSE=zeros(length(NLines)-5,1);
+SpeedAll=zeros(NLines-5,100);
+
+%If SaveVideo, I will save the video of kymograph fit and histogram at each
+%position as an .avi file
+if SaveVideo
+ v = VideoWriter(strcat(DataPath,'Kymograph_',Name,'.avi'));
+ v.FrameRate = 2;
+ open(v);
+end
+if Display
+    figure(1)
+    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.05, 0.05, 0.9, 0.9]);
+end
+% Scan of all dorso-ventral positions
+for ii=1:NLines-NAvg
+    
+    % (Moving)Average of NAvg successive positions (to avoid loosing
+    % particles too fast) 
+    
+    Kymo_Avg=mean(Kymo(:,:,ii:ii+NAvg),3);   
+    if Display
+        %Disp_Min=quantile(Kymo_Avg,50,'all');
+        %Disp_Max=quantile(Kymo_Avg,99,'all');
+        subplot(2,2,1)
+        imagesc(Kymo_Avg,[1.01 1.2])
+        title('Original image (avg 3 lines)')
+    end
+    
+    %Generation of a binary image : Every pixel  1% (Max-Min)Signal above
+    %the Min Signal is 1.
+    
+    Binary=Kymo_Avg>1.01; % Not very stringent filter
+    Binary= bwlabel(Binary, 8);
+    if Display
+        subplot(2,2,2)
+        imagesc(Binary)
+        title('Binary image')
+    end
+
+    % Find all regions of interest in the binary image and filters the
+    % regions that don't look like single lines
+    
+    blobMeasurements = regionprops(Binary, Kymo_Avg, 'all');
+    
+    %To keep a region of interest, it has to be at least 15 pixels, have an
+    %eccentricity above 0.9, to gave only very ellongated ellipses, i.e.
+    %lines. I also discard vertical and horizontal region of interest,
+    %because vertical lines are mostly particles stuck in some part of the
+    %canal, and the horizontal lines are mostly due to camera noise (and
+    %give infinite speed).
+    
+    EffectiveLines=blobMeasurements([blobMeasurements.Eccentricity]>0.9&[blobMeasurements.Area]>15&abs(sin(pi/180*[blobMeasurements.Orientation]))>0.1&abs(cos(pi/180*[blobMeasurements.Orientation]))>0.1);
+  
+    %Create an image with all regions of interest kept (bottom left)
+    keeperIndexes = find([blobMeasurements.Eccentricity]>0.9&[blobMeasurements.Area]>15&abs(sin(pi/180*[blobMeasurements.Orientation]))>0.1&abs(cos(pi/180*[blobMeasurements.Orientation]))>0.1);
+    keeperBlobsImage = ismember(Binary, keeperIndexes);
+    keeperBlobsImage= bwlabel(keeperBlobsImage, 8);
+    if Display
+        subplot(2,2,3)
+        imagesc(keeperBlobsImage)
+        title('Kept Traces')
+    end
+    %Measure the angle of all remaining regions of interest
+    
+    Orient_Kymo=[EffectiveLines.Orientation];
+    %Calculate the speed from the angle
+    
+    Speed=1./tan(-Orient_Kymo*pi/180)*(PixelSize/FrameTime);
+   
+    %I only keep and save the values of speed if at least 5 events are
+    %detected
+    if isempty(Speed)||length(Speed)<5
+        LocalMean(ii)=0;
+        LocalSE(ii)=0;
+        
+    else
+        LocalMean(ii)=mean(Speed);
+        LocalSE(ii)=std(Speed,0)/sqrt(length(Speed));
+        SpeedAll(ii,1:length(Speed))=Speed;
+    end
+    
+    %Plot the histogram (Bottom right)
+    if Display
+        subplot(2,2,4)
+        histogram(Speed,20)
+        xlim([-20 20]);
+        title('Histo speeds')
+    end
+    
+    X=linspace(1,NLines-NAvg,NLines-NAvg);
+    %histogram(Speed,20)
+
+    if SaveVideo
+          frame=getframe(gcf);
+          writeVideo(v,frame);
+    end
+      pause(0.05)
+    
+end
+
+ if SaveVideo
+     close(v)
+ end
+
+ %Generation of the profile, and Canal normalized position (X)
+ 
+SmoothedProfile=smooth(LocalMean);
+CanalPos=find(SmoothedProfile~=0);
+X=-(X-CanalPos(end))*PixelSize;
+
+% %Plot profile without errorbars
+% figure(10)
+% plot(X,smooth(squeeze(LocalMean)))
+% xlabel('Normalized Dorso-ventral position')
+% ylabel('Average Rostro-Caudal Speed (um/s)')
+% 
+% %Plot profile with errorbars
+% figure(2)
+% 
+% errorbar(X,smooth(squeeze(LocalMean)),squeeze(LocalSE));
+% xlabel('Normalized Dorso-ventral position')
+% ylabel('Average Rostro-Caudal Speed (um/s)')
+% 
+
+%Save the value of all particle speeds but only for the max and min
+%position (for validation)
+
+[~,Posm]=min(SmoothedProfile);
+[~,PosM]=max(SmoothedProfile);
+
+VentralTraces=SpeedAll(PosM,:);
+VentralTraces=VentralTraces(VentralTraces~=0);% Because I had to define a matrix where all lines have the same size, there are zeros at the end. I could have used a struct instead
+DorsalTraces=SpeedAll(Posm,:);
+DorsalTraces=DorsalTraces(DorsalTraces~=0);% Because I had to define a matrix where all lines have the same size, there are zeros at the end. I could have used a struct instead
+
+
+
+%Save the variables in a .mat file : The variables are saved in a structure whose name is the name of the original file  
+
+Name=strrep(Name,'-','_');
+Name=strrep(Name,' ','_');
+if ~isletter(Name(1))
+    Name=strcat('F',Name);
+end
+
+try
+    OriginalName=Name;
+    eval(strcat(Name,'.Pos =X;'))
+catch
+    Name=strcat('Sample',num2str(n));
+    OriginalName=Name;
+    eval(strcat(Name,'.Pos =X;'))
+end
+disp(Name)
+eval(strcat(Name,'.Speed =LocalMean;'))
+eval(strcat(Name,'.SE =LocalSE;'))
+eval(strcat(Name,'.HistoMax=VentralTraces;'))
+eval(strcat(Name,'.HistoMin=DorsalTraces;'))
+
+if n>1
+    if mod(Output,2)==1 % Save as .mat
+        save(strcat(DataPath,'SpeedvsPos_AllTraces.mat'),Name,'-append');
+    end
+    
+    if Output>1 % Save as .xls
+        xlswrite(strcat(DataPath,'FlowProfile.xlsx'),[X;LocalMean;LocalSE],OriginalName);
+    end
+        
+else
+     if mod(Output,2)==1 % Save as .mat
+         save(strcat(DataPath,'SpeedvsPos_AllTraces.mat'),Name);
+     end
+     
+     if Output>1 %Save as .xls
+         xlswrite(strcat(DataPath,'FlowProfile.xlsx'),[X;LocalMean;LocalSE],OriginalName);
+     end
+end
+
+%Generate the output structure
+eval(strcat('CSFProfile=',Name,';'))
+
+end
+ 
+
+   
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,367 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>NewAnalysisCilia</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-11-09"><meta name="DC.source" content="NewAnalysisCilia.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput">clear <span class="comment">% Clear all Variables</span>
+
+<span class="comment">% Add the program directory and subdirectory to memory</span>
+CurrentPath=pwd;
+addpath(genpath(CurrentPath))
+
+<span class="comment">%%%%%%%%%%%%%%%%%%%%Adjustable parameters%%%%%%%%%%%%%</span>
+AcqFreq=100;<span class="comment">%Hz</span>
+DrawCentralLine=0; <span class="comment">% If 1, asks the user to draw the central line to distinguish between ventral and dorsal cilia.</span>
+SzAvg=4; <span class="comment">%Size of local spatial average to increase SNR</span>
+
+AllFreq=zeros(9,10);
+Compt=0;
+
+
+
+<span class="comment">%%%%%%%%%%%%%Choose directory where data .tif files are%%%%%%%%%</span>
+
+DataPath=uigetdir(<span class="string">''</span>,<span class="string">'Choose Start Folder'</span>);
+cd(DataPath)
+
+<span class="comment">%Find and analyze every .tif file one after the other</span>
+list=ls(<span class="string">'*.tif'</span>);
+
+<span class="keyword">if</span> DrawCentralLine <span class="comment">%If a central line is asked, initialize the matrix CentralLine</span>
+    CentralLine=cell(1,size(list,1));
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> nn=1:size(list,1)
+    FileTif=strtrim(list(nn,:));
+    SaveFigure=strcat(FileTif(1:end-4),<span class="string">'.png'</span>);
+    SaveFreq=strcat(FileTif(1:end-4),<span class="string">'.mat'</span>);
+
+    <span class="comment">%%Open .tif file</span>
+    [Ima,Size]=OpenTif(FileTif);
+
+    <span class="comment">%Local Average (Smooth)to increase the SNR</span>
+    FilteredIma=Local2DAverage(Ima,SzAvg);
+    imagesc(FilteredIma(:,:,1))
+
+<span class="comment">%     for ii=1:300</span>
+<span class="comment">%         imagesc(FilteredIma(:,:,ii))</span>
+<span class="comment">%         axis equal</span>
+<span class="comment">%         pause(0.05)</span>
+<span class="comment">%     end</span>
+
+    <span class="comment">%Draw CentralLine (if requested)</span>
+    <span class="keyword">if</span> DrawCentralLine
+        <span class="comment">%Write a function</span>
+        imagesc(FilteredIma(:,:,1)) <span class="comment">%#ok&lt;*UNRCH&gt;</span>
+        title(<span class="string">'Draw central line'</span>)
+        [x, y] = getline;
+        SeparationLine=zeros(2,1+ceil(x(end))-floor(x(1)));
+        SeparationLine(1,:)=(floor(x(1)):ceil(x(end)));
+        Compt2=0;
+        <span class="keyword">for</span> zz=1:(length(x)-1)
+            Length=sum(SeparationLine(1,:)&lt;x(zz+1)&amp;SeparationLine(1,:)&gt;x(zz));
+            SeparationLine(2,1+Compt2:Compt2+Length)=(y(zz):(y(zz+1)-y(zz))/(Length-1):y(zz+1));
+            Compt2=Compt2+Length;
+        <span class="keyword">end</span>
+        SeparationLine(2,Compt2:end)=y(end);
+        hold <span class="string">on</span>
+        plot(SeparationLine(1,:),SeparationLine(2,:),<span class="string">'r'</span>,<span class="string">'linewidth'</span>,2)
+        pause(0.1)
+        CentralLine{nn}=SeparationLine;
+    <span class="keyword">end</span>
+
+    <span class="comment">%Calculate FFt and PSD</span>
+   <span class="comment">% FilteredIma=FilteredIma(:,:,:);</span>
+
+    [Freq,Freq_FromPSD]=CalculateFreqAndPSDMap(FilteredIma,Size,nn,AcqFreq);
+
+
+    <span class="comment">%%%%%%%%%%%%%%Analyze frequency maps %%%%%%%%%%</span>
+    FrequencyMap=Freq(:,:,1)*0;
+
+    <span class="keyword">for</span> ff=1:9 <span class="comment">% I divide the frequency into 9 bands of 5 Hz</span>
+        FreqBand=AcqFreq/20; <span class="comment">%Frequency bandwidth</span>
+        <span class="comment">%Create the binary image</span>
+        Freq2=Freq(:,:,1);
+        Freq2=Freq2&gt;ff*FreqBand&amp;Freq2&lt;(ff+1)*FreqBand;
+
+        Freq2=bwlabel(Freq2, 8);
+        Freq2=imfill(Freq2);
+
+        <span class="comment">%Find Regions of interest in the image</span>
+        blobMeasurements = regionprops(Freq2, Freq(:,:,1), <span class="string">'all'</span>);
+        <span class="comment">%Keep only regions with Area &gt; 40 pixels</span>
+        EffectiveCilia=blobMeasurements([blobMeasurements.Area]&gt;40);
+        keeperIndexes = find([blobMeasurements.Area]&gt;40);
+        keeperBlobsImage = ismember(Freq2, keeperIndexes);
+        FrequencyMap=FrequencyMap+keeperBlobsImage.*Freq(:,:,1);
+        keeperBlobsImage= bwlabel(keeperBlobsImage, 8);
+
+        <span class="keyword">if</span> DrawCentralLine
+            SeparationLine=CentralLine{nn};
+            AngleLine=atan(diff(SeparationLine(2,:),1,2))*180/pi;
+        <span class="keyword">end</span>
+
+        NAreas=size(EffectiveCilia,1);<span class="comment">% Number of cilia</span>
+        <span class="comment">%Position of cilia</span>
+        PosCilia(1:2,Compt+1:Compt+NAreas)=reshape([EffectiveCilia.Centroid],2,NAreas);
+        <span class="comment">%Frequency</span>
+        AllFreq(1,Compt+1:Compt+NAreas)=[EffectiveCilia.MeanIntensity];
+        <span class="comment">%Diameter</span>
+        AllFreq(2,Compt+1:Compt+NAreas)=[EffectiveCilia.EquivDiameter];
+        <span class="comment">%Eccentricity</span>
+        AllFreq(4,Compt+1:Compt+NAreas)=[EffectiveCilia.Eccentricity];
+        <span class="comment">%Area</span>
+        AllFreq(5,Compt+1:Compt+NAreas)=[EffectiveCilia.Area];
+        <span class="comment">%Major Axis Length</span>
+        AllFreq(6,Compt+1:Compt+NAreas)=[EffectiveCilia.MajorAxisLength];
+        <span class="comment">%File number</span>
+        AllFreq(8,Compt+1:Compt+NAreas)=nn;
+
+
+        <span class="keyword">if</span> DrawCentralLine <span class="comment">%If the central line is drawn, it saves the orientation depending on the position of the cilia + Saves if dorsal or ventral + Saves if too far from central canal (to be discarded)</span>
+            CiliaAngle=[EffectiveCilia.Orientation];
+            IsDorsal=reshape([EffectiveCilia.Centroid],2,NAreas);
+
+            <span class="keyword">for</span> zz=1:NAreas
+                [~,Idx]=min(abs(round(SeparationLine(1,:)-IsDorsal(1,zz))));
+                AllFreq(3,Compt+zz)=CiliaAngle(zz)+AngleLine(max(1,Idx-1));
+                AllFreq(3,Compt+zz)=90-AllFreq(3,Compt+zz);<span class="comment">% Je calcule l'angle par rapport &agrave; la verticale</span>
+                AllFreq(7,Compt+zz)=(IsDorsal(2,zz)&gt;SeparationLine(2,Idx)); <span class="comment">%1 if ventral 0 if dorsal</span>
+                AllFreq(9,Compt+zz)=abs(IsDorsal(2,zz)-SeparationLine(2,Idx))&lt;35;<span class="comment">%1 if not too far (6.5um away) from central canal cetral line</span>
+            <span class="keyword">end</span>
+        <span class="keyword">else</span>
+            AllFreq(3,Compt+1:Compt+NAreas) =[EffectiveCilia.Orientation];
+            AllFreq(7,Compt+1:Compt+NAreas)=-1*ones(NAreas,1);
+            AllFreq(9,Compt+1:Compt+NAreas)=ones(NAreas,1);
+
+        <span class="keyword">end</span>
+
+        Compt=Compt+NAreas;
+    <span class="keyword">end</span>
+
+    imagesc(FrequencyMap,[5 AcqFreq/2])
+    colorbar
+    axis <span class="string">equal</span>
+
+    set(gca,<span class="string">'FontSize'</span>,24)
+    saveas(gcf,SaveFigure)
+    <span class="comment">%Save 2D map</span>
+    save(SaveFreq,<span class="string">'Freq'</span>,<span class="string">'Freq_FromPSD'</span>,<span class="string">'AllFreq'</span>,<span class="string">'FrequencyMap'</span>)
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+clear % Clear all Variables
+
+% Add the program directory and subdirectory to memory
+CurrentPath=pwd;
+addpath(genpath(CurrentPath))
+
+%%%%%%%%%%%%%%%%%%%%Adjustable parameters%%%%%%%%%%%%%
+AcqFreq=100;%Hz
+DrawCentralLine=0; % If 1, asks the user to draw the central line to distinguish between ventral and dorsal cilia.
+SzAvg=4; %Size of local spatial average to increase SNR
+
+AllFreq=zeros(9,10);
+Compt=0;
+
+
+
+%%%%%%%%%%%%%Choose directory where data .tif files are%%%%%%%%%
+
+DataPath=uigetdir('','Choose Start Folder');
+cd(DataPath)
+
+%Find and analyze every .tif file one after the other
+list=ls('*.tif');
+
+if DrawCentralLine %If a central line is asked, initialize the matrix CentralLine
+    CentralLine=cell(1,size(list,1)); 
+end
+
+for nn=1:size(list,1)
+    FileTif=strtrim(list(nn,:));
+    SaveFigure=strcat(FileTif(1:end-4),'.png');
+    SaveFreq=strcat(FileTif(1:end-4),'.mat');
+    
+    %%Open .tif file
+    [Ima,Size]=OpenTif(FileTif);
+    
+    %Local Average (Smooth)to increase the SNR
+    FilteredIma=Local2DAverage(Ima,SzAvg);
+    imagesc(FilteredIma(:,:,1))
+    
+%     for ii=1:300
+%         imagesc(FilteredIma(:,:,ii))
+%         axis equal
+%         pause(0.05)
+%     end
+    
+    %Draw CentralLine (if requested)
+    if DrawCentralLine
+        %Write a function
+        imagesc(FilteredIma(:,:,1)) %#ok<*UNRCH>
+        title('Draw central line')
+        [x, y] = getline;
+        SeparationLine=zeros(2,1+ceil(x(end))-floor(x(1)));
+        SeparationLine(1,:)=(floor(x(1)):ceil(x(end)));
+        Compt2=0;
+        for zz=1:(length(x)-1)
+            Length=sum(SeparationLine(1,:)<x(zz+1)&SeparationLine(1,:)>x(zz));
+            SeparationLine(2,1+Compt2:Compt2+Length)=(y(zz):(y(zz+1)-y(zz))/(Length-1):y(zz+1));
+            Compt2=Compt2+Length;
+        end
+        SeparationLine(2,Compt2:end)=y(end);
+        hold on
+        plot(SeparationLine(1,:),SeparationLine(2,:),'r','linewidth',2)
+        pause(0.1)
+        CentralLine{nn}=SeparationLine;
+    end
+    
+    %Calculate FFt and PSD
+   % FilteredIma=FilteredIma(:,:,:);
+ 
+    [Freq,Freq_FromPSD]=CalculateFreqAndPSDMap(FilteredIma,Size,nn,AcqFreq);
+    
+    
+    %%%%%%%%%%%%%%Analyze frequency maps %%%%%%%%%%
+    FrequencyMap=Freq(:,:,1)*0;
+    
+    for ff=1:9 % I divide the frequency into 9 bands of 5 Hz
+        FreqBand=AcqFreq/20; %Frequency bandwidth
+        %Create the binary image
+        Freq2=Freq(:,:,1);
+        Freq2=Freq2>ff*FreqBand&Freq2<(ff+1)*FreqBand;
+        
+        Freq2=bwlabel(Freq2, 8);
+        Freq2=imfill(Freq2);
+        
+        %Find Regions of interest in the image
+        blobMeasurements = regionprops(Freq2, Freq(:,:,1), 'all');
+        %Keep only regions with Area > 40 pixels
+        EffectiveCilia=blobMeasurements([blobMeasurements.Area]>40);
+        keeperIndexes = find([blobMeasurements.Area]>40);
+        keeperBlobsImage = ismember(Freq2, keeperIndexes);
+        FrequencyMap=FrequencyMap+keeperBlobsImage.*Freq(:,:,1);
+        keeperBlobsImage= bwlabel(keeperBlobsImage, 8);
+        
+        if DrawCentralLine
+            SeparationLine=CentralLine{nn};
+            AngleLine=atan(diff(SeparationLine(2,:),1,2))*180/pi;
+        end
+        
+        NAreas=size(EffectiveCilia,1);% Number of cilia
+        %Position of cilia
+        PosCilia(1:2,Compt+1:Compt+NAreas)=reshape([EffectiveCilia.Centroid],2,NAreas);
+        %Frequency
+        AllFreq(1,Compt+1:Compt+NAreas)=[EffectiveCilia.MeanIntensity];
+        %Diameter
+        AllFreq(2,Compt+1:Compt+NAreas)=[EffectiveCilia.EquivDiameter];
+        %Eccentricity
+        AllFreq(4,Compt+1:Compt+NAreas)=[EffectiveCilia.Eccentricity];
+        %Area
+        AllFreq(5,Compt+1:Compt+NAreas)=[EffectiveCilia.Area];
+        %Major Axis Length
+        AllFreq(6,Compt+1:Compt+NAreas)=[EffectiveCilia.MajorAxisLength];
+        %File number
+        AllFreq(8,Compt+1:Compt+NAreas)=nn;
+        
+        
+        if DrawCentralLine %If the central line is drawn, it saves the orientation depending on the position of the cilia + Saves if dorsal or ventral + Saves if too far from central canal (to be discarded)
+            CiliaAngle=[EffectiveCilia.Orientation];
+            IsDorsal=reshape([EffectiveCilia.Centroid],2,NAreas);
+            
+            for zz=1:NAreas
+                [~,Idx]=min(abs(round(SeparationLine(1,:)-IsDorsal(1,zz))));
+                AllFreq(3,Compt+zz)=CiliaAngle(zz)+AngleLine(max(1,Idx-1));
+                AllFreq(3,Compt+zz)=90-AllFreq(3,Compt+zz);% Je calcule l'angle par rapport à la verticale
+                AllFreq(7,Compt+zz)=(IsDorsal(2,zz)>SeparationLine(2,Idx)); %1 if ventral 0 if dorsal
+                AllFreq(9,Compt+zz)=abs(IsDorsal(2,zz)-SeparationLine(2,Idx))<35;%1 if not too far (6.5um away) from central canal cetral line
+            end
+        else
+            AllFreq(3,Compt+1:Compt+NAreas) =[EffectiveCilia.Orientation];
+            AllFreq(7,Compt+1:Compt+NAreas)=-1*ones(NAreas,1);
+            AllFreq(9,Compt+1:Compt+NAreas)=ones(NAreas,1);
+            
+        end
+        
+        Compt=Compt+NAreas;
+    end
+    
+    imagesc(FrequencyMap,[5 AcqFreq/2])
+    colorbar
+    axis equal
+    
+    set(gca,'FontSize',24)
+    saveas(gcf,SaveFigure)
+    %Save 2D map
+    save(SaveFreq,'Freq','Freq_FromPSD','AllFreq','FrequencyMap')
+    
+end
+
+##### SOURCE END #####
+--></body></html>
